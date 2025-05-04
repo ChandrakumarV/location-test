@@ -1,5 +1,8 @@
 import type React from "react";
 import { useState } from "react";
+import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import type { LatLngExpression } from "leaflet"; // For type safety
+import "leaflet/dist/leaflet.css"; // Leaflet styles
 
 const CurrentLocation: React.FC = () => {
   const [loading, setLoading] = useState(false);
@@ -43,7 +46,6 @@ const CurrentLocation: React.FC = () => {
       },
       {
         enableHighAccuracy: true,
-        // timeout: 20000, // 20 seconds
         maximumAge: 0,
       }
     );
@@ -65,6 +67,19 @@ const CurrentLocation: React.FC = () => {
             <p>
               <strong>Longitude:</strong> {longitude}
             </p>
+            <MapContainer
+              center={[latitude, longitude] as LatLngExpression}
+              zoom={40}
+              style={{ width: "100%", height: "400px" }}
+            >
+              <TileLayer
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+              />
+              <Marker position={[latitude, longitude] as LatLngExpression}>
+                <Popup>You are here!</Popup>
+              </Marker>
+            </MapContainer>
           </div>
         )}
       </div>

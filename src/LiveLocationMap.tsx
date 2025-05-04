@@ -1,6 +1,12 @@
 import type React from "react";
 import { useState } from "react";
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import {
+  MapContainer,
+  TileLayer,
+  Marker,
+  Popup,
+  Polyline,
+} from "react-leaflet";
 import type { LatLngExpression } from "leaflet"; // For type safety
 import "leaflet/dist/leaflet.css"; // Leaflet styles
 
@@ -9,6 +15,11 @@ const CurrentLocation: React.FC = () => {
   const [latitude, setLatitude] = useState<number | null>(null);
   const [longitude, setLongitude] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [distance, setDistance] = useState<number | null>(null);
+
+  // Static point (for distance calculation)
+  const staticLat = 10.95778;
+  const staticLng = 78.105382;
 
   const getCurrentLocation = () => {
     setLoading(true);
@@ -21,6 +32,7 @@ const CurrentLocation: React.FC = () => {
       (position) => {
         setLatitude(position.coords.latitude);
         setLongitude(position.coords.longitude);
+        calculateDistance();
         setError(null);
         setLoading(false);
       },
@@ -51,12 +63,38 @@ const CurrentLocation: React.FC = () => {
     );
   };
 
+  const calculateDistance = () => {
+    console.log(latitude, longitude);
+    if (latitude && longitude) {
+      const R = 6371; // Radius of Earth in km
+      const dLat = (latitude - staticLat) * (Math.PI / 180);
+      const dLon = (longitude - staticLng) * (Math.PI / 180);
+      const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(staticLat * (Math.PI / 180)) *
+          Math.cos(latitude * (Math.PI / 180)) *
+          Math.sin(dLon / 2) *
+          Math.sin(dLon / 2);
+
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      setDistance(R * c); // Distance in km
+    }
+  };
+
   return (
     <div style={{ padding: "1rem" }}>
       {/* biome-ignore lint/a11y/useButtonType: <explanation> */}
-      <button onClick={getCurrentLocation} disabled={loading}>
+      <button
+        onClick={getCurrentLocation}
+        disabled={loading}
+        style={{ marginRight: 20 }}
+      >
         {loading ? "Loading..." : "📍 Get Current Location"}
       </button>
+      {latitude !== null && longitude !== null && (
+        // biome-ignore lint/a11y/useButtonType: <explanation>
+        <button onClick={calculateDistance}>Get Distance</button>
+      )}
       <div style={{ marginTop: "1rem" }}>
         {error && <p style={{ color: "red" }}>{error}</p>}
         {latitude !== null && longitude !== null && (
@@ -67,9 +105,18 @@ const CurrentLocation: React.FC = () => {
             <p>
               <strong>Longitude:</strong> {longitude}
             </p>
+
+            {distance !== null && (
+              <div>
+                <p>
+                  <strong>Distance:</strong> {distance.toFixed(2)} km |
+                  {+distance.toFixed(2) * 1000} m
+                </p>
+              </div>
+            )}
             <MapContainer
               center={[latitude, longitude] as LatLngExpression}
-              zoom={40}
+              zoom={13}
               style={{ width: "100%", height: "400px" }}
             >
               <TileLayer
@@ -79,6 +126,18 @@ const CurrentLocation: React.FC = () => {
               <Marker position={[latitude, longitude] as LatLngExpression}>
                 <Popup>You are here!</Popup>
               </Marker>
+              <Marker position={[staticLat, staticLng] as LatLngExpression}>
+                <Popup>Static Point - (10.957780, 78.105382)</Popup>
+              </Marker>
+              <Polyline
+                positions={[
+                  [latitude, longitude],
+                  [staticLat, staticLng],
+                ]}
+                color="blue"
+                weight={4}
+                opacity={0.7}
+              />
             </MapContainer>
           </div>
         )}

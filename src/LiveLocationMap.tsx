@@ -1,14 +1,40 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import type React from "react";
 import { useState } from "react";
+import L from "leaflet";
 import {
   MapContainer,
   TileLayer,
   Marker,
   Popup,
   Polyline,
+  Circle,
 } from "react-leaflet";
 import type { LatLngExpression } from "leaflet"; // For type safety
 import "leaflet/dist/leaflet.css"; // Leaflet styles
+
+import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
+import markerIcon from "leaflet/dist/images/marker-icon.png";
+import markerShadow from "leaflet/dist/images/marker-shadow.png";
+import redMarker from "/mark.png";
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// biome-ignore lint/performance/noDelete: <explanation>
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: markerIcon2x,
+  iconUrl: markerIcon,
+  shadowUrl: markerShadow,
+});
+
+const redIcon = new L.Icon({
+  iconUrl: redMarker,
+  shadowUrl: markerShadow,
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41],
+});
 
 const CurrentLocation: React.FC = () => {
   const [loading, setLoading] = useState(false);
@@ -126,7 +152,10 @@ const CurrentLocation: React.FC = () => {
               <Marker position={[latitude, longitude] as LatLngExpression}>
                 <Popup>You are here!</Popup>
               </Marker>
-              <Marker position={[staticLat, staticLng] as LatLngExpression}>
+              <Marker
+                icon={redIcon}
+                position={[staticLat, staticLng] as LatLngExpression}
+              >
                 <Popup>Static Point - (10.957780, 78.105382)</Popup>
               </Marker>
               <Polyline
@@ -137,6 +166,13 @@ const CurrentLocation: React.FC = () => {
                 color="blue"
                 weight={4}
                 opacity={0.7}
+              />
+              <Circle
+                center={[staticLat, staticLng] as LatLngExpression}
+                radius={100} // 100 meters radius
+                color="green"
+                fillColor="green"
+                fillOpacity={0.3}
               />
             </MapContainer>
           </div>
